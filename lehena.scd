@@ -67,13 +67,13 @@ t = TempoClock(80/60); // Ez dakit oraindik hemen egin beharko nukeen, baina, or
 	s.bind({ //dena aldi berean (sorta (bundle) batean) exekutatuko dela ziurtatzeko
 		s.newNodeAllocators; // Nodoen indizeak hasieratzeko (IKE)
 		~mainGrp = Group.new;
-		~reverbGrp = Group.after(~mainGrp); //irakur funtzio bukaeran
+		~reverbGrp = Group.after(~mainGrp); // irakur funtzio bukaeran
 		~reverbSynth = Synth.new(
 			\reverb,
 			[
 				\amp, 1,
-				\predelay, 0.1,
-				\revtime, 1.8,
+				\predelay,0.2, //0.1,
+				\revtime,1.8, //1.8,
 				\lpf, 4500,
 				\mix, 0.35,
 				\in, ~bus[\reverb],
@@ -89,29 +89,40 @@ t = TempoClock(80/60); // Ez dakit oraindik hemen egin beharko nukeen, baina, or
 	e = Dictionary.new;
 
 	e.add(\event1 -> {
-		~kick = Pbind(
+
+		Pdef(\kick, Pbind(
 			\instrument,\bpfbuf,
 			\buf,b[\Kick][0],
 			\rel,0.2,
 			\amp,Pwhite(0.5,0.8,inf),
 			\dur,Pseq([3,1,3,1,3,1,3,1]/4,inf),
-		).play(t,quant:~barDur);
-		~snare = Pbind(
+		)).play(t,quant:4);
+		Pdef(\snare,Pbind(
 			\instrument, \bpfbuf,
 			\buf,Pxrand(b[\Snare].value.collect({arg a; a.bufnum}),inf),
 			\rel,Pif(Pbinop('==', Pkey(\buf), 12),1,0.3),
 			\amp,Pif(Pbinop('==', Pkey(\buf), 12),1,0.7),
-			\dur,Pseq([3,3,4,2,4]/4,inf),//Pseq([1/1],inf),
+			\dur,Pseq([3,3,4,2,4]/4,inf),//Pseq([1/1],inf), //[3,3,4,2,4] Son - [3,3,4,3,3] Bossa Nova
 			// \stretch, ~barDur,
 			// \out,~bus[\reverb],
-		).play(t,quant:~barDur);
-		~bell = Pbind(
+		)).play(t,quant:4);
+		Pdef(\bell, Pbind(
 			\instrument,\bpfbuf,
 			\buf,b[\Bell][0],
 			\rel,0.2,
 			\amp,Pwhite(0.3,0.6,inf),
 			\dur, 1/4,
-		).play(t,quant:~barDur);
+		)).play(t,quant:4);
+	});
+	e.add(\event2 ->{
+		Pbindef(\kick,\dur,Pseq([3,1,3,1,3,1,3,1,]/4,inf),\amp,Pwhite(0.5,0.8,inf));
+		Pbindef(\snare,\dur,Pbjorklund2(26,32,inf)/4,\amp,Pif(Pbinop('==', Pkey(\buf), 12),1,0.7));
+		Pbindef(\bell,\dur,1/4,\amp,0.25);
+	});
+	e.add(\event3 ->{
+		Pbindef(\kick,\dur,Pseq([3,1,3,1,3,1,3,1,]/2,inf));
+		Pbindef(\snare,\dur,1/4,\amp,0);
+		Pbindef(\bell,\dur,Pbjorklund2(10,16)/4,\amp,0.4);
 	});
 
 	MIDIdef.cc(\controller, { //Continious Controller messages
@@ -167,7 +178,6 @@ s.waitForBoot({ // (GUI-a onartzen duen) AppClock gainean dabilen Routine-a (exe
 		pan=0, amp=1, out=0;
 		var sig, env;
 		env = EnvGen.kr(Env([0,1,1,0],[atk,sus,rel],[c1,0,c2]),doneAction:2);
-		// Env([0,1,1,0],[1,1,2],[1,0,1]).test.plot // Envelopa "ikusteko"
 		sig = PlayBuf.ar(2, buf, rate*BufRateScale.ir(buf),startPos:spos);
 		sig = XFade2.ar(sig, BPF.ar(sig, freq, rq, 1/rq.sqrt), bpfmix*2-1);
 		sig = sig * env;
@@ -176,13 +186,13 @@ s.waitForBoot({ // (GUI-a onartzen duen) AppClock gainean dabilen Routine-a (exe
 	}).add;
 
 	SynthDef(\reverb, {
-		arg in, predelay=0.1, revtime=1.8,
+		arg in, predelay=0.08, revtime=1.8,
 		lpf=4500, mix=0.15, amp=1, out=0;
 		var dry, wet, temp, sig;
 		dry = In.ar(in,2);
 		temp = In.ar(in,2);
 		wet = 0;
-		temp = DelayN.ar(temp, 0,2, predelay);
+		temp = DelayN.ar(temp, 0,2, ºpredelay);
 		16.do{
 			temp = AllpassN.ar(temp, 0.05, {Rand(0.001,0.05)}!2, revtime);
 			temp = LPF.ar(temp, lpf);
@@ -206,20 +216,11 @@ s.waitForBoot({ // (GUI-a onartzen duen) AppClock gainean dabilen Routine-a (exe
 )
 
 // Saioa bera
-
+t = TempoClock(150/60);
 e[\event1].value;
-~kick.play(t,quant:4);
-~snare.play(t,quant:4);
-~bell.play(t,quant:4);
-~kick.stop;
-~snare.stop;
-~bell.stop;
-t = TempoClock(100/60)
-~barDur = 4/t.tempo;
-t.permanent(true)
-t.beatDur
-t.baseBard
-
-a= Pbjorklund2(3, 8, 2).asStream;
-3.do{a.next.postln};
-
+Pbindef(\snare).play//play(t,quant: 4)
+Pbindef(\snare,\out,~bus[\reverb])
+Pbindef(\kick,\dur,Pseq([3,1,3,1,3,1,3,1,]/2,inf))
+Pbindef(\snare,\dur,Pbjorklund2(26,32,inf)/4)
+Pbindef(\bell,\dur,1/4,\amp,0.25)
+Synth(\bpfsaw, [\freq, 1.4, \atk, 0.1, \rel, 7, \out, ~bus[\reverb]], ~mainGrp); //reverbare proba egiteko
