@@ -148,7 +148,7 @@ ServerQuit.add(~cleanup);
 //5. boot server
 s.waitForBoot({ // (GUI-a onartzen duen) AppClock gainean dabilen Routine-a (exekuzioa gelditzea baimentzen duen bakarra (wait,s.sync...)) sortzen du automatikoki ezkutuan.
 
-	s.sync; // Zeregin asinkronkoek (Buffer.read, SynthDef...) buka dezaten itxaroten du. Kasu honetan, zerbitzariak egin behar duena (ServerBoot-en erregistratutako funtzioak exekutatu, adibidez) egin dezala itxaron.
+s.sync; // Zeregin asinkronkoek (Buffer.read, SynthDef...) buka dezaten itxaroten du. Kasu honetan, zerbitzariak egin behar duena (ServerBoot-en erregistratutako funtzioak exekutatu, adibidez) egin dezala itxaron.
 
 	//6a. SynthDefs
 	SynthDef(\bpfsaw, {
@@ -219,7 +219,7 @@ s.waitForBoot({ // (GUI-a onartzen duen) AppClock gainean dabilen Routine-a (exe
 t = TempoClock(150/60);
 e[\event1].value;
 Pbindef(\snare).play//play(t,quant: 4)
-Pbindef(\snare,\out,~bus[\reverb])
+Pbindef(\snae,out,~bus[\reverb])
 Pbindef(\kick,\dur,Pseq([3,1,3,1,3,1,3,1,]/2,inf))
 Pbindef(\snare,\dur,Pbjorklund2(26,32,inf)/4)
 Pbindef(\bell,\dur,1/4,\amp,0.25)
